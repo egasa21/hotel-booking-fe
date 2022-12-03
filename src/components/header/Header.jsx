@@ -4,16 +4,18 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCar, faTaxi, faBed, faPlane, faCalendarDays, faPerson } from '@fortawesome/free-solid-svg-icons'
 import { DateRange } from 'react-date-range';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { format } from 'date-fns'
-import {useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { SearchContext } from '../../context/SearchContext';
+import { AuthContext } from '../../context/AuthContext';
 
-const Header = ({type}) => {
+const Header = ({ type }) => {
 
     const navigate = useNavigate()
     const [destination, setDestination] = useState("")
     const [openDate, setOpenDate] = useState(false);
-    const [date, setDate] = useState([
+    const [dates, setDates] = useState([
         {
             startDate: new Date(),
             endDate: new Date(),
@@ -28,6 +30,8 @@ const Header = ({type}) => {
 
     })
 
+    const { user } = useContext (AuthContext)
+
     const handleOption = (name, operation) => {
         setOptions((prev) => {
             return {
@@ -37,8 +41,11 @@ const Header = ({type}) => {
         })
     }
 
-    const handleSearch = () =>{
-        navigate('/hotels', {state: {destination, date, options}});
+    const { dispatch } = useContext(SearchContext)
+
+    const handleSearch = () => {
+        dispatch({ type: 'NEW_SEARCH', payload: { destination, dates, options } })
+        navigate('/hotels', { state: { destination, dates, options } });
     }
 
 
@@ -67,30 +74,31 @@ const Header = ({type}) => {
                         <span>Airport taxis</span>
                     </div>
                 </div>
-                { type !== 'list' &&
+                {type !== 'list' &&
                     <>
                         <h1 className="headerTitle">A lifetime of discount? It's Genius.</h1>
                         <p className="headerDesc">
                             Get rewarded for your travels - unlock instant saving of 10% or more
                             with a free Panorama account
                         </p>
-                        <button className="headerBtn">Sig in / Register</button>
+                        {!user && <button className="headerBtn">Sig in / Register</button>}
                         <div className="headerSearch">
                             <div className="headerSearchItem">
                                 <FontAwesomeIcon icon={faBed} className="headerIcon" />
-                                <input type="text" placeholder='Where are you going' className="headerSearchInput" 
+                                <input type="text" placeholder='Where are you going' className="headerSearchInput"
                                     onChange={(e) => setDestination(e.target.value)}
                                 />
                             </div>
                             <div className="headerSearchItem">
                                 <FontAwesomeIcon icon={faCalendarDays} className="headerIcon" />
-                                <span onClick={() => setOpenDate(!openDate)} className="headerSearchText">{`${format(date[0].startDate, "dd/MM/yyyy")} to ${format(date[0].endDate, "dd/MM/yyyy")}`}</span>
+                                <span onClick={() => setOpenDate(!openDate)} className="headerSearchText">{`${format(dates[0].startDate, "dd/MM/yyyy")} to ${format(dates[0].endDate, "dd/MM/yyyy")}`}</span>
                                 {openDate && <DateRange
                                     editableDateInputs={true}
-                                    onChange={item => setDate([item.selection])}
+                                    onChange={(item) => setDates([item.selection])}
                                     moveRangeOnFirstSelection={false}
-                                    ranges={date}
+                                    ranges={dates}
                                     className="date"
+                                    minDate={new Date()}
                                 />}
                             </div>
                             <div className="headerSearchItem">
